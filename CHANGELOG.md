@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
-## [Unreleased]
+## [1.29.1] - 2026-10-21
 
 ### Added
 
@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 ### Changed
 
 - Default Verilog formatting to Verible while preserving existing formatter choices and arguments.
-- Make fork release builds artifact-only, without Marketplace publishing.
+- Publish the five tested platform VSIXs as a GitHub release when a matching version tag is pushed; Marketplace publishing remains disabled.
 
 ## [1.29.0] - 2026-07-12
 

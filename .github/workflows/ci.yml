@@ -1,6 +1,5 @@
 on:
-  push:
-    branches: [ main, bundle-verible-from-submodule ]
+  workflow_call:
   pull_request:
     branches: [ main, bundle-verible-from-submodule ]
 

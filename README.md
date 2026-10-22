@@ -9,7 +9,7 @@ HDL support for VS Code with syntax highlighting, snippets, classic Ctags-backed
 
 ## Installation
 
-For this fork, download the matching `veriloghdl-<target>` VSIX artifact from the [Bundled Verible VSIX workflow](https://github.com/robcholz/vscode-verilog-hdl-support/actions/workflows/bundled-vsix.yml). Install it using VS Code’s **Extensions: Install from VSIX…** command.
+For this fork, download the matching platform VSIX from [GitHub Releases](https://github.com/robcholz/vscode-verilog-hdl-support/releases) after a version tag is released, or download the matching `veriloghdl-<target>` VSIX artifact from the [Bundled Verible VSIX workflow](https://github.com/robcholz/vscode-verilog-hdl-support/actions/workflows/bundled-vsix.yml). Install it using VS Code’s **Extensions: Install from VSIX…** command.
 
 The upstream extension is available from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mshr-h.VerilogHDL) or [Open VSX Registry](https://open-vsx.org/extension/mshr-h/veriloghdl).
 
@@ -118,7 +118,7 @@ On Windows, for example, use `"C:\\Custom Tools\\verible-verilog-format.exe"`. E
 
 Verible is pinned by the Git gitlink in `third_party/verible` to release **v0.0-4071-g8d9f2c97**, commit `8d9f2c973c386ea81834614767c1ffbebbf0ab1d`. Builds check the clean submodule against the gitlink and release tag. No formatter assets or checksum manifest are downloaded or consulted. Verible's own Bazel module dependency metadata is preserved unchanged.
 
-Push a branch named `bundle-verible-from-submodule` or `main`, open a PR to `main`, or manually run **Bundled Verible VSIX** to build, test, and upload all five packages in CI. The fork's release workflow builds artifacts only; Marketplace publishing is disabled. Artifact names are `veriloghdl-<target>`. The macOS Apple Silicon artifact is `veriloghdl-darwin-arm64`.
+Push a branch named `bundle-verible-from-submodule` or `main` to run the release pipeline as a dry run, open a PR to `main`, or manually run **Bundled Verible VSIX** to build, test, and upload all five packages in CI. Pushing a matching version tag runs the same release pipeline and publishes its tested assets, as described below. Marketplace publishing is disabled. Artifact names are `veriloghdl-<target>`. The macOS Apple Silicon artifact is `veriloghdl-darwin-arm64`.
 
 For contributors who choose to build locally (these commands are documentation only; this implementation task runs builds exclusively in CI), install Node.js 24, the Bazel version in `third_party/verible/.bazelversion`, and a native C++ toolchain. Windows also needs LLVM/clang-cl and `winflexbison3`, as in `.github/actions/build-verible/action.yml`. Bazel uses Java during the build; users of the VSIX do not need it.
 
@@ -140,6 +140,34 @@ python scripts/smoke-vsix.py veriloghdl-darwin-arm64.vsix darwin-arm64
 ```
 
 `npm run build:verible` stages only the native target and verbatim upstream license/notice files from Verible and fetched Bazel dependencies. `npm run package` refuses a missing or mismatched bundle; it never initiates a native build. The VSIX verifier rejects submodule sources, missing legal files, extra platform bundles, and multiple formatter executables. CI pins its VS Code test host to the declared minimum version, 1.107.0, and runs formatter resolution/invocation tests and smoke-tests both `.v` and `.sv` with the binary extracted from the actual VSIX, using a directory with spaces and a restricted PATH.
+
+### Git tags and GitHub releases
+
+The **Release platform VSIX packages** workflow (`.github/workflows/publish-marketplace.yml`, retaining its historical filename) runs when a `v<major>.<minor>.<patch>` tag is pushed. It:
+
+1. Checks that the tag, `package.json`, both root versions in `package-lock.json`, and the versioned changelog entry agree.
+2. Runs the upstream checks and builds/tests all five native VSIXs in CI.
+3. Verifies every VSIX's extension identity, version, target, pinned Verible source commit, single native binary, and notice inventory.
+4. Creates a GitHub release from the changelog notes with the five tested VSIXs attached.
+
+No release is created if any required check or platform fails. The workflow uses the repository's GitHub token; no publishing PAT is needed for GitHub releases. Branch pushes and manual runs against a branch exercise the same gates and artifacts but do not create a release.
+
+For a new version, update `package.json`, the two root extension versions in `package-lock.json`, and `CHANGELOG.md`, then commit and push the source changes. After approving the release, the maintainer can push the matching tag; for the prepared version:
+
+```sh
+git tag -a v1.29.1 -m "Verilog-HDL/SystemVerilog 1.29.1: bundled Verible"
+git push origin v1.29.1
+```
+
+Download links will appear under [GitHub Releases](https://github.com/robcholz/vscode-verilog-hdl-support/releases). The Apple Silicon asset is `veriloghdl-darwin-arm64.vsix`; install it using **Extensions: Install from VSIX…**. GitHub releases and VS Code Marketplace listings are separate distribution channels.
+
+### VS Code Marketplace availability
+
+This fork is **not published to the Marketplace**. The manifest currently retains upstream's `mshr-h.veriloghdl` identity for compatibility; the existing Marketplace listing belongs to upstream and does not contain this fork's changes.
+
+To distribute the fork through the Marketplace, create or use a publisher you control at [Manage Publishers & Extensions](https://marketplace.visualstudio.com/manage). Then prepare a distinct fork identity (publisher, extension name/display name, metadata, runtime extension-ID lookups, and tests) and publish all five platform packages under that identity and version. VS Code then selects the package matching the extension host automatically. Do not upload the current `mshr-h` packages under another publisher without updating their identity.
+
+A maintainer can upload Marketplace-ready VSIXs through the publisher management portal, or configure authenticated CI publishing after publisher access is established. This GitHub release workflow deliberately does not perform Marketplace publication. See Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) for publisher registration, platform-specific packages, and current authentication options. Keep publishing credentials in CI secrets or an approved identity connection; do not paste them into this repository or chat.
 
 ## Waveform Viewing
 
