@@ -79,12 +79,65 @@ On Windows, the shared tool runner resolves `xvlog.exe`, `xvlog.cmd`, or `xvlog.
 
 ## Formatting
 
-Use VS Code's **Format Document** command after choosing a formatter under `verilog.formatting`.
+Use VS Code's **Format Document** command immediately after installing the matching platform VSIX. Both Verilog and SystemVerilog default to the bundled `verible-verilog-format`. No formatter installation, PATH entry, Homebrew, Java, or runtime download is needed. If several extensions provide formatting, choose **Format Document With… → Configure Default Formatter → Verilog-HDL/SystemVerilog**.
 
-- Verilog: `verilog-format`, iStyle, or `verible-verilog-format`
-- SystemVerilog: `verible-verilog-format`
+The fork's **Bundled Verible VSIX** GitHub Actions workflow produces these separate packages. Each contains one native formatter and its redistribution notices:
 
-Range formatting is not supported. Formatter paths and arguments are configured separately. The `verilog-format` settings path supports `~` and `${env:VAR}` expansion.
+| Extension host | VSIX target | CI build/test host |
+| --- | --- | --- |
+| macOS Apple Silicon | `darwin-arm64` | macOS 15 ARM64 |
+| macOS Intel | `darwin-x64` | macOS 15 Intel |
+| Linux x64 | `linux-x64` | Ubuntu 22.04, fully static formatter |
+| Linux ARM64 | `linux-arm64` | Ubuntu 24.04 ARM64, fully static formatter |
+| Windows x64 | `win32-x64` | Windows Server 2025, static C/C++ runtime |
+
+These are source builds from the pinned Verible submodule, rather than downloaded upstream formatter binaries. macOS builds target macOS 12 or later; CI exercises macOS 15. Windows ARM64, 32-bit hosts, BSD, and browser-only extension hosts are unsupported. Other OS versions are not CI-tested. Unsupported or missing bundles report an error with instructions to configure an external formatter; there is no silent fallback to PATH.
+
+The target and executable path are resolved on the **extension host**. For SSH, containers, or WSL Remote, install the VSIX matching the remote host; a Windows client connected to WSL uses the Linux package. The executable is resolved relative to the installed extension directory, including directories containing spaces. Unix execute permissions are restored if extraction removed them. Existing linter WSL settings and external tool invocation remain available.
+
+### Custom formatters and executable paths
+
+Verilog still supports `verilog-format` and iStyle; SystemVerilog supports Verible. Existing formatter selections, argument settings, and explicit executable paths take precedence.
+
+The exact path value `verible-verilog-format` (the setting default) selects the bundle, even when that value is saved explicitly. To use an external binary, set `verilog.formatting.veribleVerilogFormatter.path` to an absolute path, relative path, or a different executable name. For an external Verible on PATH with the default name, use its full path. Do not put shell quotes around the path; paths with spaces are passed as a single process argument.
+
+```json
+{
+    "verilog.formatting.verilogHDL.formatter": "verible-verilog-format",
+    "verilog.formatting.systemVerilog.formatter": "verible-verilog-format",
+    "verilog.formatting.veribleVerilogFormatter.path": "/opt/custom tools/verible-verilog-format",
+    "verilog.formatting.veribleVerilogFormatter.arguments": "--indentation_spaces=4 --column_limit=100"
+}
+```
+
+On Windows, for example, use `"C:\\Custom Tools\\verible-verilog-format.exe"`. External executables must be runnable on the extension host. Range formatting is not supported. The `verilog-format` settings path still supports `~` and `${env:VAR}` expansion.
+
+### Building the platform VSIX
+
+Verible is pinned by the Git gitlink in `third_party/verible` to release **v0.0-4071-g8d9f2c97**, commit `8d9f2c973c386ea81834614767c1ffbebbf0ab1d`. Builds check the clean submodule against the gitlink and release tag. No formatter assets or checksum manifest are downloaded or consulted. Verible's own Bazel module dependency metadata is preserved unchanged.
+
+Push a branch named `bundle-verible-from-submodule` or `main`, open a PR to `main`, or manually run **Bundled Verible VSIX** to build, test, and upload all five packages in CI. The fork's release workflow builds artifacts only; Marketplace publishing is disabled. Artifact names are `veriloghdl-<target>`. The macOS Apple Silicon artifact is `veriloghdl-darwin-arm64`.
+
+For contributors who choose to build locally (these commands are documentation only; this implementation task runs builds exclusively in CI), install Node.js 24, the Bazel version in `third_party/verible/.bazelversion`, and a native C++ toolchain. Windows also needs LLVM/clang-cl and `winflexbison3`, as in `.github/actions/build-verible/action.yml`. Bazel uses Java during the build; users of the VSIX do not need it.
+
+```sh
+git clone --recurse-submodules https://github.com/robcholz/vscode-verilog-hdl-support.git
+cd vscode-verilog-hdl-support
+git checkout bundle-verible-from-submodule
+git submodule update --init --recursive
+git -C third_party/verible fetch origin tag v0.0-4071-g8d9f2c97
+npm ci
+npm run build:verible
+npm run compile-tests
+npm run compile
+# Linux: prefix the next command with xvfb-run -a
+npm run test:bundled
+npm run package -- darwin-arm64  # use the native host target from the table
+npm run verify:vsix -- veriloghdl-darwin-arm64.vsix darwin-arm64
+python scripts/smoke-vsix.py veriloghdl-darwin-arm64.vsix darwin-arm64
+```
+
+`npm run build:verible` stages only the native target and verbatim upstream license/notice files from Verible and fetched Bazel dependencies. `npm run package` refuses a missing or mismatched bundle; it never initiates a native build. The VSIX verifier rejects submodule sources, missing legal files, extra platform bundles, and multiple formatter executables. CI runs formatter resolution/invocation tests and smoke-tests both `.v` and `.sv` with the binary extracted from the actual VSIX, using a directory with spaces and a restricted PATH.
 
 ## Waveform Viewing
 
@@ -136,7 +189,7 @@ Ctags-backed editing features and the optional external language-server integrat
 ## Troubleshooting
 
 1. Run **Verilog: Doctor** and inspect the `Verilog Doctor` output channel.
-2. Confirm the selected Ctags, linter, formatter, or language-server executable is available on the extension host's `PATH`, or configure its path explicitly.
+2. The default formatter is bundled. For external tools, confirm the selected Ctags, linter, formatter, or language-server executable is available on the extension host's `PATH`, or configure its path explicitly.
 3. For multi-root workspaces, place relative include/config paths under the workspace folder containing the active file.
 4. If Ctags navigation cannot find another file, remember that the built-in integration only tags the current document; use an external language server or Ctags workspace extension for cross-file lookup.
 5. If xvlog fails without a normal VRFC diagnostic, check the Verilog output log for its exit status and stderr summary. Temporary-directory cleanup failures are logged separately and do not hide diagnostics.

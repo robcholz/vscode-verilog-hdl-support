@@ -15,6 +15,7 @@ import {
 import { splitCommandLineArgs } from '../utils/commandLine';
 import { expandPathVariables, resolveConfigPath } from '../utils/configPath';
 import { getWorkspaceFolderForUri } from '../utils/workspace';
+import { resolveVeribleExecutable } from '../tools/BundledVerible';
 
 export { expandPathVariables, resolveConfigPath } from '../utils/configPath';
 
@@ -499,7 +500,7 @@ async function buildFormattingSection(
   const verilogFormatter = vscode
     .workspace
     .getConfiguration('verilog.formatting.verilogHDL')
-    .get<string>('formatter', 'verilog-format');
+    .get<string>('formatter', 'verible-verilog-format');
   const systemVerilogFormatter = vscode
     .workspace
     .getConfiguration('verilog.formatting.systemVerilog')
@@ -704,6 +705,16 @@ export async function buildFormatterChecks(
       message: `${formatterConfig.binaryName} path is empty; set ${formatterConfig.pathSetting}.`,
     });
     return checks;
+  }
+  if (formatter === 'verible-verilog-format') {
+    try {
+      formatterConfig.path = resolveVeribleExecutable(formatterConfig.path, {
+        extensionPath: vscode.extensions.getExtension('mshr-h.veriloghdl')?.extensionPath ?? '',
+      });
+    } catch (error) {
+      checks.push({ status: 'error', message: String(error) });
+      return checks;
+    }
   }
   await appendBinaryChecks(
     checks,

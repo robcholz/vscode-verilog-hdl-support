@@ -7,6 +7,8 @@ const testTempRoot = path.join(os.tmpdir(), `veriloghdl-vscode-test-${process.pi
 export default defineConfig({
 	files: [
 		'out/src/test/wslPathConverter.test.js',
+		'out/src/test/bundledVerible.test.js',
+		'out/src/test/format.test.js',
 		'out/src/test/verilator.test.js',
 		'out/src/test/slang.test.js',
 		'out/src/test/toolRunner.test.js',

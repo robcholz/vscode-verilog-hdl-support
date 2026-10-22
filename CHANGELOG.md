@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
+## [Unreleased]
+
+### Added
+
+- Bundle a native Verible formatter by default for Verilog and SystemVerilog.
+- Build five platform-specific VSIX artifacts in CI from a release-pinned Git submodule, including redistribution notices and packaged-binary smoke tests.
+- Diagnose missing/unsupported bundles and preserve explicit external executable overrides.
+
+### Changed
+
+- Default Verilog formatting to Verible while preserving existing formatter choices and arguments.
+- Make fork release builds artifact-only, without Marketplace publishing.
+
 ## [1.29.0] - 2026-07-12
 
 ### Changed

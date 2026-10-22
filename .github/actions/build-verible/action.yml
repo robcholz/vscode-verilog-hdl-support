@@ -1,0 +1,33 @@
+name: Build pinned Verible submodule
+description: Build the native formatter and collect redistribution notices
+runs:
+  using: composite
+  steps:
+    - name: Install Bazel matching the submodule
+      shell: bash
+      run: |
+        set -euo pipefail
+        version=$(cat third_party/verible/.bazelversion)
+        case "$RUNNER_OS" in
+          macOS) os=darwin; suffix= ;;
+          Linux) os=linux; suffix= ;;
+          Windows) os=windows; suffix=.exe ;;
+        esac
+        case "$RUNNER_ARCH" in
+          ARM64) arch=arm64 ;;
+          X64) arch=x86_64 ;;
+          *) echo "Unsupported runner architecture: $RUNNER_ARCH"; exit 1 ;;
+        esac
+        mkdir -p "$RUNNER_TEMP/verible-bazel"
+        curl -fL --retry 3 "https://github.com/bazelbuild/bazel/releases/download/$version/bazel-$version-$os-$arch$suffix" -o "$RUNNER_TEMP/verible-bazel/bazel$suffix"
+        chmod +x "$RUNNER_TEMP/verible-bazel/bazel$suffix"
+        echo "$RUNNER_TEMP/verible-bazel" >> "$GITHUB_PATH"
+    - name: Install Windows build tools
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        choco install winflexbison3 --yes --no-progress
+        choco install llvm --yes --no-progress --allow-downgrade --version=20.1.4
+    - name: Build and stage native formatter with notices
+      shell: bash
+      run: npm run build:verible

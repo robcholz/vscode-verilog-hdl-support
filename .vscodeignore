@@ -25,3 +25,7 @@ esbuild.js
 examples/**
 build/**
 scripts/**
+
+third_party/**
+.gitmodules
+resources/verible/.staging/**

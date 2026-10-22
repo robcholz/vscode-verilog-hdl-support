@@ -337,3 +337,24 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Bundled Verible formatter
+
+The platform-specific VSIX contains `verible-verilog-format`, built without source
+modifications from the CHIPS Alliance Verible Git submodule at release
+`v0.0-4071-g8d9f2c97` (commit `8d9f2c973c386ea81834614767c1ffbebbf0ab1d`).
+
+- Copyright The Verible Authors. Licensed under Apache License 2.0.
+- Source: https://github.com/chipsalliance/verible/tree/8d9f2c973c386ea81834614767c1ffbebbf0ab1d
+- The full Verible license is reproduced at
+  `resources/verible/<target>/notices/verible/LICENSE`.
+- `resources/verible/<target>/NOTICES.md` indexes verbatim license, copyright,
+  author, and notice files collected from Verible and all fetched Bazel dependency
+  repositories (including Abseil, RE2 and build/code-generation tools). This
+  conservative set includes notices for build-only dependencies.
+- `resources/verible/<target>/build-info.json` records the source release, Git
+  commit, target and Bazel version.
+
+The original extension's MIT license and existing third-party notices remain in
+force. Verible's source and build products other than the platform formatter and
+its legal/provenance files are excluded from the VSIX.

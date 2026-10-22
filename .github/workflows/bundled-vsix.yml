@@ -1,0 +1,68 @@
+name: Bundled Verible VSIX
+on:
+  push:
+    branches: [main, bundle-verible-from-submodule]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  package:
+    name: Build, test and package ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: darwin-arm64
+          - os: macos-15-intel
+            target: darwin-x64
+          - os: ubuntu-22.04
+            target: linux-x64
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+          - os: windows-2025
+            target: win32-x64
+    runs-on: ${{ matrix.os }}
+    env:
+      VERILOGHDL_REQUIRE_BUNDLE: '1'
+      MACOSX_DEPLOYMENT_TARGET: '12.0'
+    steps:
+      - name: Checkout source and pinned submodule
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Fetch Verible release tag for provenance validation
+        shell: bash
+        run: git -C third_party/verible fetch origin tag v0.0-4071-g8d9f2c97
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+      - run: npm ci
+      - uses: ./.github/actions/build-verible
+      - run: npm run compile-tests
+      - run: npm run compile
+      - name: Verify grammar generation
+        shell: bash
+        run: npm run syntax && git diff --exit-code -- syntaxes/systemverilog.tmLanguage.json
+      - name: Formatter and tool-runner tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:bundled
+      - name: Formatter and tool-runner tests (macOS and Windows)
+        if: runner.os != 'Linux'
+        run: npm run test:bundled
+      - name: Package one native target
+        run: npm run package -- ${{ matrix.target }}
+      - name: Verify package contents
+        run: npm run verify:vsix -- veriloghdl-${{ matrix.target }}.vsix ${{ matrix.target }}
+      - name: Smoke test actual packaged formatter without external tools
+        run: python scripts/smoke-vsix.py veriloghdl-${{ matrix.target }}.vsix ${{ matrix.target }}
+      - name: Upload tested VSIX
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: veriloghdl-${{ matrix.target }}
+          path: veriloghdl-${{ matrix.target }}.vsix
+          if-no-files-found: error

@@ -22,6 +22,8 @@ const forbiddenPrefixes = [
   'resources/wasm/',
   'build/',
   '.cache/',
+  'third_party/',
+  '.gitmodules',
 ];
 
 const forbiddenFragments = [
@@ -71,6 +73,18 @@ const entries = new Set(
     .filter(Boolean)
 );
 
+const target = process.argv[3] ?? `${process.platform}-${process.arch}`;
+const bundle = `resources/verible/${target}`;
+requiredEntries.push(`${bundle}/NOTICES.md`, `${bundle}/build-info.json`,
+  `${bundle}/notices/verible/LICENSE`,
+  `${bundle}/${target.startsWith('win32') ? 'verible-verilog-format.exe' : 'verible-verilog-format'}`);
+const binaries = [...entries].filter(entry => /verible-verilog-format(?:\.exe)?$/.test(entry));
+if (binaries.length !== 1) { fail(`Expected exactly one formatter binary, got ${binaries.length}`); }
+for (const entry of entries) {
+  if (entry.startsWith('resources/verible/') && !entry.startsWith(`${bundle}/`)) {
+    fail(`VSIX contains another target's bundle: ${entry}`);
+  }
+}
 for (const requiredEntry of requiredEntries) {
   if (!entries.has(requiredEntry)) {
     fail(`VSIX is missing ${requiredEntry}`);

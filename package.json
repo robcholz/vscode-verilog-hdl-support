@@ -24,6 +24,7 @@
   ],
   "icon": "images/icon.png",
   "main": "./dist/extension.js",
+  "extensionKind": ["workspace"],
   "contributes": {
     "languages": [
       {
@@ -307,8 +308,8 @@
               "iStyle",
               "verible-verilog-format"
             ],
-            "default": "verilog-format",
-            "markdownDescription": "Choose a Verilog-HDL formatter."
+            "default": "verible-verilog-format",
+            "markdownDescription": "Choose a Verilog-HDL formatter. Verible is bundled by default."
           },
           "verilog.formatting.systemVerilog.formatter": {
             "scope": "window",
@@ -359,7 +360,7 @@
             "scope": "window",
             "type": "string",
             "default": "verible-verilog-format",
-            "markdownDescription": "A path to the verible-verilog-format binary."
+            "markdownDescription": "The default name `verible-verilog-format` uses the bundled formatter. Set another executable name or an explicit path (without shell quotes) to use an external formatter on the extension host."
           },
           "verilog.formatting.veribleVerilogFormatter.arguments": {
             "scope": "window",
@@ -787,7 +788,8 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "package:prepare": "npm run check-types && npm run lint && node esbuild.js --production",
-    "package": "npm run package:prepare && npx @vscode/vsce package",
+    "package": "node scripts/package-platform.mjs",
+    "build:verible": "node scripts/build-verible.mjs",
     "verify:vsix": "node scripts/check-vsix-contents.mjs",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
@@ -795,6 +797,7 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vscode-test",
+    "test:bundled": "vscode-test --config .vscode-test.bundled.mjs",
     "test:windows": "vscode-test --config .vscode-test.windows.mjs --fgrep \"[windows]\"",
     "test:windows-wsl2": "vscode-test --config .vscode-test.windows.mjs --fgrep \"[windows-wsl2]\"",
     "syntax": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json"

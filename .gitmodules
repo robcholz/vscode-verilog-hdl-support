@@ -1,0 +1,3 @@
+[submodule "third_party/verible"]
+	path = third_party/verible
+	url = https://github.com/chipsalliance/verible.git

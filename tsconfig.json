@@ -14,5 +14,5 @@
     "noUnusedLocals": true /* Report errors on unused local declarations. */,
     "noUnusedParameters": true /* Report errors on unused parameters. */
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "third_party", "resources"]
 }

@@ -12,7 +12,10 @@ import {
   buildVeribleVerilogFormatArgs,
   buildVerilogFormatArgs,
   SystemVerilogFormatProvider,
+  VerilogFormatProvider,
 } from '../providers/FormatProvider';
+import { BundledVeribleError, resolveVeribleExecutable } from '../tools/BundledVerible';
+import { getRepositoryRoot } from './pathTestUtils';
 import type { ToolRunOptions, ToolRunResult } from '../tools/ToolRunner';
 
 suite('Formatting', () => {
@@ -248,5 +251,88 @@ suite('Formatting', () => {
       await veribleConfig.update('path', previousPath, vscode.ConfigurationTarget.Global);
       await veribleConfig.update('arguments', previousArgs, vscode.ConfigurationTarget.Global);
     }
+  });
+});
+
+suite('Bundled formatter invocation', () => {
+  const config = vscode.workspace.getConfiguration('verilog.formatting.veribleVerilogFormatter');
+  let previousPath: string | undefined;
+  let previousArgs: string | undefined;
+  setup(async () => {
+    previousPath = config.inspect<string>('path')?.globalValue;
+    previousArgs = config.inspect<string>('arguments')?.globalValue;
+    await config.update('path', 'verible-verilog-format', vscode.ConfigurationTarget.Global);
+    await config.update('arguments', '--indentation_spaces=4', vscode.ConfigurationTarget.Global);
+  });
+  teardown(async () => {
+    await config.update('path', previousPath, vscode.ConfigurationTarget.Global);
+    await config.update('arguments', previousArgs, vscode.ConfigurationTarget.Global);
+  });
+
+  for (const language of ['verilog', 'systemverilog']) {
+    test(`${language} defaults to bundled Verible and passes argument arrays without quoting`, async () => {
+      const selection = vscode.workspace.getConfiguration(`verilog.formatting.${language === 'verilog' ? 'verilogHDL' : 'systemVerilog'}`);
+      assert.strictEqual(selection.get('formatter'), 'verible-verilog-format');
+      const binary = path.join(os.tmpdir(), 'remote extension with spaces', 'verible-verilog-format');
+      const dependencies: FormatProviderDependencies = {
+        extensionPath: '/remote/extension',
+        resolveVerible: (configuredPath, options) => {
+          assert.strictEqual(configuredPath, 'verible-verilog-format');
+          assert.strictEqual(options.extensionPath, '/remote/extension');
+          return binary;
+        },
+        runTool: async options => {
+          assert.strictEqual(options.command, binary);
+          assert.deepStrictEqual(options.args.slice(0, -1), ['--inplace', '--indentation_spaces=4']);
+          assert.ok(options.cancellationToken);
+          fs.writeFileSync(options.args.at(-1)!, 'module m;\nendmodule\n');
+          return { command: options.command, args: options.args, exitCode: 0, signal: null, stdout: '', stderr: '' };
+        },
+      };
+      const provider = language === 'verilog' ? new VerilogFormatProvider(dependencies) : new SystemVerilogFormatProvider(dependencies);
+      const document = await vscode.workspace.openTextDocument({ language, content: 'module   m;endmodule' });
+      const token = new vscode.CancellationTokenSource();
+      try {
+        const edits = await provider.provideDocumentFormattingEdits(document, { tabSize: 2, insertSpaces: true }, token.token);
+        assert.strictEqual(edits?.[0].newText, 'module m;\nendmodule\n');
+      } finally { token.dispose(); }
+    });
+
+    test(`${language} actually formats with the source-built bundle`, async function () {
+      this.timeout(15000);
+      const root = getRepositoryRoot();
+      try { resolveVeribleExecutable('verible-verilog-format', { extensionPath: root }); }
+      catch (error) {
+        if (process.env.VERILOGHDL_REQUIRE_BUNDLE === '1') { throw error; }
+        this.skip(); return;
+      }
+      const provider = language === 'verilog'
+        ? new VerilogFormatProvider({ extensionPath: root })
+        : new SystemVerilogFormatProvider({ extensionPath: root });
+      const input = language === 'verilog' ? 'module   m;wire a;endmodule' : 'module   m;logic a;endmodule';
+      const document = await vscode.workspace.openTextDocument({ language, content: input });
+      const token = new vscode.CancellationTokenSource();
+      try {
+        const edits = await provider.provideDocumentFormattingEdits(document, { tabSize: 4, insertSpaces: true }, token.token);
+        assert.strictEqual(edits?.length, 1);
+        assert.notStrictEqual(edits?.[0].newText, input);
+        assert.ok(edits?.[0].newText.includes('module m;'));
+      } finally { token.dispose(); }
+    });
+  }
+
+  test('unsupported bundle produces an actionable UI error and never invokes a tool', async () => {
+    let message = '';
+    const provider = new SystemVerilogFormatProvider({
+      resolveVerible: () => { throw new BundledVeribleError('Unsupported host: set verilog.formatting.veribleVerilogFormatter.path'); },
+      runTool: async () => assert.fail('Must not fall back to PATH'),
+      showError: error => { message = error; },
+    });
+    const document = await vscode.workspace.openTextDocument({ language: 'systemverilog', content: 'module m;endmodule' });
+    const token = new vscode.CancellationTokenSource();
+    try {
+      assert.deepStrictEqual(await provider.provideDocumentFormattingEdits(document, { tabSize: 2, insertSpaces: true }, token.token), []);
+      assert.ok(message.includes('verilog.formatting.veribleVerilogFormatter.path'));
+    } finally { token.dispose(); }
   });
 });

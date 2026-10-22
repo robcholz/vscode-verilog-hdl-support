@@ -114,14 +114,14 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // Configure Format Provider
-  const verilogFormatProvider = new FormatProvider.VerilogFormatProvider();
+  const verilogFormatProvider = new FormatProvider.VerilogFormatProvider({ extensionPath: context.extensionUri.fsPath });
   context.subscriptions.push(
     vscode.languages.registerDocumentFormattingEditProvider(
       { scheme: 'file', language: 'verilog' },
       verilogFormatProvider
     )
   );
-  const systemVerilogFormatProvider = new FormatProvider.SystemVerilogFormatProvider();
+  const systemVerilogFormatProvider = new FormatProvider.SystemVerilogFormatProvider({ extensionPath: context.extensionUri.fsPath });
   context.subscriptions.push(
     vscode.languages.registerDocumentFormattingEditProvider(
       { scheme: 'file', language: 'systemverilog' },

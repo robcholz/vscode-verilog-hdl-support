@@ -9,3 +9,5 @@
 **/.hdl_checker/*
 svls.log
 .DS_Store
+
+/resources/verible/

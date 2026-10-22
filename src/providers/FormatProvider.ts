@@ -10,9 +10,13 @@ import { runTool, ToolRunError } from '../tools/ToolRunner';
 import { splitCommandLineArgs } from '../utils/commandLine';
 import { resolveConfigPath } from '../utils/configPath';
 import { getWorkspaceRootForDocument } from '../utils/workspace';
+import { BundledVeribleError, resolveVeribleExecutable } from '../tools/BundledVerible';
 
 export interface FormatProviderDependencies {
   runTool?: typeof runTool;
+  extensionPath?: string;
+  resolveVerible?: typeof resolveVeribleExecutable;
+  showError?: (message: string) => void;
 }
 
 export function buildVerilogFormatArgs(
@@ -97,13 +101,17 @@ abstract class FileBasedFormattingEditProvider implements vscode.DocumentFormatt
     namespace: string,
     tmpFileExt: string,
     logger: Logger,
-    dependencies: FormatProviderDependencies = {}
+    protected readonly dependencies: FormatProviderDependencies = {}
   ) {
     this.namespace = namespace;
     this.logger = logger;
     this.tmpFileExt = tmpFileExt;
     this.runToolFn = dependencies.runTool ?? runTool;
     this.config = vscode.workspace.getConfiguration(`verilog.formatting.${  namespace}`);
+  }
+
+  protected resolveExecutable(): string {
+    return this.config.get('path', '');
   }
 
   // should be implemented to match formatter's argument
@@ -123,7 +131,7 @@ abstract class FileBasedFormattingEditProvider implements vscode.DocumentFormatt
       const args: string[] = this.prepareArgument(document, tempFile.path);
 
       // execute command
-      const binPath: string = this.config.get('path', '');
+      const binPath = this.resolveExecutable();
       const cwd = getWorkspaceRootForDocument(document);
       this.logger.info("Executing formatter", { binPath, args, cwd });
       const result = await this.runToolFn({
@@ -154,6 +162,12 @@ abstract class FileBasedFormattingEditProvider implements vscode.DocumentFormatt
       if (err instanceof ToolRunError && err.reason === 'cancelled') {
         return [];
       }
+      if (err instanceof BundledVeribleError) {
+        const showError = this.dependencies.showError ?? ((message: string) => {
+          void vscode.window.showErrorMessage(message);
+        });
+        showError(err.message);
+      }
       this.logger.error("Formatter execution failed", { error: String(err) });
       if (err instanceof Error && err.stack) {
         this.logger.error("Stack trace", { stack: err.stack });
@@ -179,6 +193,15 @@ class IStyleVerilogFormatterEditProvider extends FileBasedFormattingEditProvider
   }
 }
 class VeribleVerilogFormatEditProvider extends FileBasedFormattingEditProvider {
+  protected resolveExecutable(): string {
+    const extensionPath = this.dependencies.extensionPath
+      ?? vscode.extensions.getExtension('mshr-h.veriloghdl')?.extensionPath
+      ?? '';
+    return (this.dependencies.resolveVerible ?? resolveVeribleExecutable)(
+      this.config.get('path', 'verible-verilog-format'), { extensionPath }
+    );
+  }
+
   prepareArgument(_document: vscode.TextDocument, tmpFilepath: string): string[] {
     const customArgs: string = <string>this.config.get('arguments', '');
     return buildVeribleVerilogFormatArgs(tmpFilepath, customArgs);
