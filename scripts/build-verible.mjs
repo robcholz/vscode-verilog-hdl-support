@@ -24,7 +24,8 @@ const formatter = '//verible/verilog/tools/formatter:verible-verilog-format';
 const buildArgs = ['build', '-c', 'opt', '--jobs=4', '--stamp', '--verbose_failures'];
 if (process.platform === 'linux') {
   // Keep glibc dynamic; carry GCC runtime libraries under their runtime exception.
-  buildArgs.push('--linkopt=-static-libstdc++', '--linkopt=-static-libgcc');
+  buildArgs.push('--linkopt=-static-libgcc',
+    '--repo_env=BAZEL_LINKLIBS=-Wl,-Bstatic:-lstdc++:-Wl,-Bdynamic:-lm');
 }
 if (process.platform === 'darwin') { buildArgs.push('--macos_minimum_os=12.0'); }
 if (process.platform === 'win32') { buildArgs.push('--features=static_link_msvcrt', '--dynamic_mode=off'); }

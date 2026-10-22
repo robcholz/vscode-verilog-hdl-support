@@ -27,7 +27,9 @@ for (const name of ['NOTICES.md', 'notices/verible/LICENSE',
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 // Only fixed npm scripts run through cmd on Windows; executable paths/formatter args never use a shell.
 execFileSync(npm, ['run', 'package:prepare'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' });
-execFileSync(npm, ['exec', '--yes', '--package=@vscode/vsce@3.6.0', '--', 'vsce', 'package',
+execFileSync(npm, ['exec', '--yes', '--no-audit', '--no-fund', '--omit=optional', '--ignore-scripts', '--package=@vscode/vsce@3.6.0', '--', 'vsce', 'package',
   '--target', target, '--out', `veriloghdl-${target}.vsix`], {
   cwd: root, stdio: 'inherit', shell: process.platform === 'win32',
+  // Packaging uses neither publisher credentials nor native signing/keychain helpers.
+  env: { ...process.env, VSCE_STORE: 'file', npm_config_audit: 'false', npm_config_fund: 'false' },
 });

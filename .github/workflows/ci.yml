@@ -124,7 +124,9 @@ jobs:
           sudo apt update
           sudo apt install -y iverilog verilator
           cargo install svls
-          cargo install --locked --git https://github.com/vivekmalneedi/veridian.git
+          # Veridian's parser predates newer Rust glob-import errors.
+          rustup toolchain install 1.85.1 --profile minimal
+          cargo +1.85.1 install --locked --git https://github.com/vivekmalneedi/veridian.git
         if: runner.os == 'Linux'
       - run: xvfb-run -a npm test
         if: runner.os == 'Linux'
