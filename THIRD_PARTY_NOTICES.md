@@ -350,7 +350,7 @@ modifications from the CHIPS Alliance Verible Git submodule at release
   `resources/verible/<target>/notices/verible/LICENSE`.
 - `resources/verible/<target>/NOTICES.md` indexes verbatim license, copyright,
   author, and notice files collected from Verible and all fetched Bazel dependency
-  repositories (including Abseil, RE2 and build/code-generation tools). This
+  repositories (including Abseil and build/code-generation tools). This
   conservative set includes notices for build-only dependencies.
 - `resources/verible/<target>/build-info.json` records the source release, Git
   commit, target and Bazel version.

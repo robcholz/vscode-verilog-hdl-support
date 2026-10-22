@@ -65,7 +65,7 @@ for (const entry of fs.readdirSync(external, { withFileTypes: true })) {
   // Canonical repositories are directories; aliases may be symlinks to the same repository.
   if (entry.isDirectory()) { collect(path.join(external, entry.name), `dependencies/${entry.name}`); }
 }
-for (const required of [/abseil/, /re2/]) {
+for (const required of [/abseil/]) {
   if (!collected.some(name => required.test(name) && /LICENSE|COPYING/i.test(name))) {
     throw new Error(`Missing required dependency license: ${required}`);
   }

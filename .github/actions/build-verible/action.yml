@@ -7,7 +7,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        version=$(cat third_party/verible/.bazelversion)
+        version=$(tr -d '\r\n' < third_party/verible/.bazelversion)
         case "$RUNNER_OS" in
           macOS) os=darwin; suffix= ;;
           Linux) os=linux; suffix= ;;

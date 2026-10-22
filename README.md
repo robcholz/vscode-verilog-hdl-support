@@ -9,7 +9,9 @@ HDL support for VS Code with syntax highlighting, snippets, classic Ctags-backed
 
 ## Installation
 
-Install the extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mshr-h.VerilogHDL) or [Open VSX Registry](https://open-vsx.org/extension/mshr-h/veriloghdl).
+For this fork, download the matching `veriloghdl-<target>` VSIX artifact from the [Bundled Verible VSIX workflow](https://github.com/robcholz/vscode-verilog-hdl-support/actions/workflows/bundled-vsix.yml). Install it using VS Code’s **Extensions: Install from VSIX…** command.
+
+The upstream extension is available from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mshr-h.VerilogHDL) or [Open VSX Registry](https://open-vsx.org/extension/mshr-h/veriloghdl).
 
 ## Features
 

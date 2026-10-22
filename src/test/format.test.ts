@@ -16,7 +16,7 @@ import {
 } from '../providers/FormatProvider';
 import { BundledVeribleError, resolveVeribleExecutable } from '../tools/BundledVerible';
 import { getRepositoryRoot } from './pathTestUtils';
-import type { ToolRunOptions, ToolRunResult } from '../tools/ToolRunner';
+import { ToolRunError, type ToolRunOptions, type ToolRunResult } from '../tools/ToolRunner';
 
 suite('Formatting', () => {
   test('verilog-format settings path is expanded when the file exists', () => {
@@ -320,6 +320,21 @@ suite('Bundled formatter invocation', () => {
       } finally { token.dispose(); }
     });
   }
+
+  test('a bundle that cannot start shows external formatter instructions', async () => {
+    let message = '';
+    const provider = new SystemVerilogFormatProvider({
+      resolveVerible: () => '/bundled/verible-verilog-format',
+      runTool: async options => { throw new ToolRunError('Missing OS runtime', options.command, options.args, 'spawn'); },
+      showError: error => { message = error; },
+    });
+    const document = await vscode.workspace.openTextDocument({ language: 'systemverilog', content: 'module m;endmodule' });
+    const token = new vscode.CancellationTokenSource();
+    try {
+      assert.deepStrictEqual(await provider.provideDocumentFormattingEdits(document, { tabSize: 2, insertSpaces: true }, token.token), []);
+      assert.ok(message.includes('verilog.formatting.veribleVerilogFormatter.path'));
+    } finally { token.dispose(); }
+  });
 
   test('unsupported bundle produces an actionable UI error and never invokes a tool', async () => {
     let message = '';

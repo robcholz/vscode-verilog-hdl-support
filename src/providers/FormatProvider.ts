@@ -162,11 +162,17 @@ abstract class FileBasedFormattingEditProvider implements vscode.DocumentFormatt
       if (err instanceof ToolRunError && err.reason === 'cancelled') {
         return [];
       }
-      if (err instanceof BundledVeribleError) {
+      const bundledSpawnFailed = err instanceof ToolRunError && err.reason === 'spawn'
+        && this.namespace === 'veribleVerilogFormatter'
+        && this.config.get('path', 'verible-verilog-format') === 'verible-verilog-format';
+      if (err instanceof BundledVeribleError || bundledSpawnFailed) {
         const showError = this.dependencies.showError ?? ((message: string) => {
           void vscode.window.showErrorMessage(message);
         });
-        showError(err.message);
+        showError(err instanceof BundledVeribleError ? err.message
+          : 'Bundled Verible could not start on this extension host. Check the supported OS/runtime '
+            + 'requirements in the README, or set verilog.formatting.veribleVerilogFormatter.path '
+            + 'to an external formatter executable.');
       }
       this.logger.error("Formatter execution failed", { error: String(err) });
       if (err instanceof Error && err.stack) {
