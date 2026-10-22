@@ -4,9 +4,13 @@ on:
   pull_request:
     branches: [ main, bundle-verible-from-submodule ]
 
+concurrency:
+  group: upstream-checks-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   run:
-    name: Upload vsix package
+    name: Existing extension checks
     strategy:
       matrix:
         include:
@@ -26,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: recursive
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -80,6 +86,19 @@ jobs:
         if: runner.os == 'Windows'
       - name: Verify slang
         run: slang --version
+      - name: Fetch pinned Verible release (macOS)
+        if: runner.os == 'macOS'
+        run: git -C third_party/verible fetch origin tag v0.0-4071-g8d9f2c97
+      - name: Build Verible from submodule (macOS)
+        if: runner.os == 'macOS'
+        uses: ./.github/actions/build-verible
+      - name: Build Verible linter for existing integration tests (macOS)
+        if: runner.os == 'macOS'
+        working-directory: third_party/verible
+        run: |
+          bazel build -c opt --jobs=4 //verible/verilog/tools/lint:verible-verilog-lint
+          echo "$(bazel info bazel-bin)/verible/verilog/tools/lint" >> "$GITHUB_PATH"
+          echo "$(bazel info bazel-bin)/verible/verilog/tools/formatter" >> "$GITHUB_PATH"
       - name: Install dependencies (macOS)
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'

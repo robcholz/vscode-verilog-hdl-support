@@ -52,7 +52,9 @@ function readListing() {
 
   const vsixPath = process.argv[2];
   if (vsixPath) {
-    return execFileSync('unzip', ['-Z1', vsixPath], { encoding: 'utf8' });
+    return execFileSync('python', ['-c',
+      'import sys, zipfile; print("\\n".join(zipfile.ZipFile(sys.argv[1]).namelist()))', vsixPath],
+    { encoding: 'utf8' });
   }
 
   return execFileSync('npx', ['--yes', '@vscode/vsce', 'ls'], { encoding: 'utf8' });

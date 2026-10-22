@@ -23,6 +23,9 @@ with tempfile.TemporaryDirectory(prefix='vsix smoke with spaces ') as temporary:
     binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
     info = json.loads((bundle / 'build-info.json').read_text())
     assert info['target'] == target
+    assert info['notices']
+    for notice in info['notices']:
+        assert (bundle / 'notices' / notice).is_file(), notice
     assert (bundle / 'notices/verible/LICENSE').is_file()
     # Native architecture and no separately installed formatter are required.
     if os.name == 'nt':

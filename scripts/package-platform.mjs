@@ -18,6 +18,8 @@ if (targets.length !== 1 || targets[0] !== target) {
 const bundle = path.join(bundleRoot, target);
 const info = JSON.parse(fs.readFileSync(path.join(bundle, 'build-info.json'), 'utf8'));
 if (info.target !== target) { throw new Error('Bundle target does not match VSIX target'); }
+if (!Array.isArray(info.notices) || info.notices.length === 0) { throw new Error('Missing legal file inventory'); }
+for (const notice of info.notices) { fs.accessSync(path.join(bundle, 'notices', notice)); }
 for (const name of ['NOTICES.md', 'notices/verible/LICENSE',
   target.startsWith('win32') ? 'verible-verilog-format.exe' : 'verible-verilog-format']) {
   fs.accessSync(path.join(bundle, name));

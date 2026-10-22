@@ -26,6 +26,7 @@ if (process.platform === 'linux') {
   // Keep glibc dynamic; carry GCC runtime libraries under their runtime exception.
   buildArgs.push('--linkopt=-static-libstdc++', '--linkopt=-static-libgcc');
 }
+if (process.platform === 'darwin') { buildArgs.push('--macos_minimum_os=12.0'); }
 if (process.platform === 'win32') { buildArgs.push('--features=static_link_msvcrt', '--dynamic_mode=off'); }
 execFileSync(bazel, [...buildArgs, formatter], { cwd: source, stdio: 'inherit' });
 const bazelInfo = key => execFileSync(bazel, ['info', key], { cwd: source, encoding: 'utf8' }).trim();
@@ -106,6 +107,7 @@ if (process.platform === 'win32') {
 fs.writeFileSync(path.join(destination, 'build-info.json'), JSON.stringify({
   release, commit, target, bazelVersion: fs.readFileSync(path.join(source, '.bazelversion'), 'utf8').trim(),
   source: 'https://github.com/chipsalliance/verible',
+  notices: collected.sort(),
 }, null, 2) + '\n');
 fs.writeFileSync(path.join(destination, 'NOTICES.md'),
   `# Bundled Verible\n\nCopyright The Verible Authors. Apache-2.0.\n\n`

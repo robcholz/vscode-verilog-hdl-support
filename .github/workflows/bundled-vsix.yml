@@ -6,6 +6,9 @@ on:
     branches: [main]
   workflow_dispatch:
   workflow_call:
+concurrency:
+  group: bundled-vsix-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
