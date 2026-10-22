@@ -97,8 +97,8 @@ jobs:
         working-directory: third_party/verible
         run: |
           bazel build -c opt --jobs=4 //verible/verilog/tools/lint:verible-verilog-lint
-          echo "$(bazel info bazel-bin)/verible/verilog/tools/lint" >> "$GITHUB_PATH"
-          echo "$(bazel info bazel-bin)/verible/verilog/tools/formatter" >> "$GITHUB_PATH"
+          echo "$(bazel info -c opt bazel-bin)/verible/verilog/tools/lint" >> "$GITHUB_PATH"
+          echo "$(bazel info -c opt bazel-bin)/verible/verilog/tools/formatter" >> "$GITHUB_PATH"
       - name: Install dependencies (macOS)
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'
