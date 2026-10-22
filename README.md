@@ -87,11 +87,11 @@ The fork's **Bundled Verible VSIX** GitHub Actions workflow produces these separ
 | --- | --- | --- |
 | macOS Apple Silicon | `darwin-arm64` | macOS 15 ARM64 |
 | macOS Intel | `darwin-x64` | macOS 15 Intel |
-| Linux x64 | `linux-x64` | Ubuntu 22.04, fully static formatter |
-| Linux ARM64 | `linux-arm64` | Ubuntu 24.04 ARM64, fully static formatter |
+| Linux x64 | `linux-x64` | Ubuntu 22.04, glibc 2.35+ |
+| Linux ARM64 | `linux-arm64` | Ubuntu 24.04 ARM64, glibc 2.39+ |
 | Windows x64 | `win32-x64` | Windows Server 2025, static C/C++ runtime |
 
-These are source builds from the pinned Verible submodule, rather than downloaded upstream formatter binaries. macOS builds target macOS 12 or later; CI exercises macOS 15. Windows ARM64, 32-bit hosts, BSD, and browser-only extension hosts are unsupported. Other OS versions are not CI-tested. Unsupported or missing bundles report an error with instructions to configure an external formatter; there is no silent fallback to PATH.
+These are source builds from the pinned Verible submodule, rather than downloaded upstream formatter binaries. macOS builds target macOS 12 or later; CI exercises macOS 15. Windows ARM64, 32-bit hosts, BSD, and browser-only extension hosts are unsupported. Linux links to system glibc and bundles its C++ runtime; GCC runtime license/exception notices are included. Other OS versions are not CI-tested. Unsupported or missing bundles report an error with instructions to configure an external formatter; there is no silent fallback to PATH.
 
 The target and executable path are resolved on the **extension host**. For SSH, containers, or WSL Remote, install the VSIX matching the remote host; a Windows client connected to WSL uses the Linux package. The executable is resolved relative to the installed extension directory, including directories containing spaces. Unix execute permissions are restored if extraction removed them. Existing linter WSL settings and external tool invocation remain available.
 

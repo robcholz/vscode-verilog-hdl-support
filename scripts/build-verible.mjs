@@ -22,7 +22,10 @@ if (commit !== gitlink || git('rev-parse', `${release}^{commit}`) !== commit || 
 const bazel = process.env.VERIBLE_BAZEL ?? 'bazel';
 const formatter = '//verible/verilog/tools/formatter:verible-verilog-format';
 const buildArgs = ['build', '-c', 'opt', '--jobs=4', '--stamp', '--verbose_failures'];
-if (process.platform === 'linux') { buildArgs.push('--config=create_static_linked_executables'); }
+if (process.platform === 'linux') {
+  // Keep glibc dynamic; carry GCC runtime libraries under their runtime exception.
+  buildArgs.push('--linkopt=-static-libstdc++', '--linkopt=-static-libgcc');
+}
 if (process.platform === 'win32') { buildArgs.push('--features=static_link_msvcrt', '--dynamic_mode=off'); }
 execFileSync(bazel, [...buildArgs, formatter], { cwd: source, stdio: 'inherit' });
 const bazelInfo = key => execFileSync(bazel, ['info', key], { cwd: source, encoding: 'utf8' }).trim();
@@ -64,6 +67,40 @@ for (const entry of fs.readdirSync(external, { withFileTypes: true })) {
 for (const required of [/abseil/, /re2/]) {
   if (!collected.some(name => required.test(name) && /LICENSE|COPYING/i.test(name))) {
     throw new Error(`Missing required dependency license: ${required}`);
+  }
+}
+if (process.platform === 'linux') {
+  const documentation = '/usr/share/doc';
+  const runtimeNotices = fs.readdirSync(documentation).filter(name => /^(gcc-|libgcc|libstdc\+\+)/.test(name));
+  for (const name of runtimeNotices) {
+    const copyright = path.join(documentation, name, 'copyright');
+    if (fs.existsSync(copyright)) {
+      const item = `toolchain/${name}/copyright`;
+      const output = path.join(noticeDir, item);
+      fs.mkdirSync(path.dirname(output), { recursive: true });
+      fs.copyFileSync(copyright, output);
+      collected.push(item);
+    }
+  }
+  // Debian/Ubuntu GCC copyright files include GPL text and the GCC Runtime Library Exception.
+  if (!collected.some(name => name.startsWith('toolchain/'))) { throw new Error('Missing GCC runtime notices'); }
+  for (const license of ['GPL-3', 'LGPL-3', 'GPL-2', 'LGPL-2.1']) {
+    const original = `/usr/share/common-licenses/${license}`;
+    if (fs.existsSync(original)) {
+      const item = `toolchain/licenses/${license}`;
+      const output = path.join(noticeDir, item);
+      fs.mkdirSync(path.dirname(output), { recursive: true });
+      fs.copyFileSync(original, output);
+      collected.push(item);
+    }
+  }
+}
+if (process.platform === 'win32') {
+  for (const [directory, name] of [
+    ['C:/Program Files/LLVM', 'llvm'],
+    ['C:/ProgramData/chocolatey/lib/winflexbison3', 'winflexbison'],
+  ]) {
+    if (fs.existsSync(directory)) { collect(directory, `toolchain/${name}`); }
   }
 }
 fs.writeFileSync(path.join(destination, 'build-info.json'), JSON.stringify({

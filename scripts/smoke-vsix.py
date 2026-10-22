@@ -43,5 +43,8 @@ with tempfile.TemporaryDirectory(prefix='vsix smoke with spaces ') as temporary:
         assert input_file.read_text() == formatted, 'Formatting must be idempotent'
     if platform.system() == 'Linux':
         result = subprocess.run(['ldd', str(binary)], capture_output=True, text=True)
-        assert 'not a dynamic executable' in result.stderr + result.stdout or 'statically linked' in result.stdout
+        assert result.returncode == 0, result.stderr
+        assert 'not found' not in result.stdout, result.stdout
+        assert 'libstdc++' not in result.stdout and 'libgcc_s' not in result.stdout, result.stdout
+        print(result.stdout)
     print(f'Packaged {target} formatter smoke test passed at {binary}')

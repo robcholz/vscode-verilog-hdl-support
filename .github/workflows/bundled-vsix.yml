@@ -42,6 +42,8 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
+      - name: Test package verifier
+        run: python scripts/test-packaging.py
       - uses: ./.github/actions/build-verible
       - run: npm run compile-tests
       - run: npm run compile
