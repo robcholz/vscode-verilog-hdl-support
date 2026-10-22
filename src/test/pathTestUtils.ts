@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-const EXTENSION_ID = 'mshr-h.veriloghdl';
+import { EXTENSION_ID } from '../constants';
 
 export function getRepositoryRoot(): string {
   return vscode.extensions.getExtension(EXTENSION_ID)?.extensionPath

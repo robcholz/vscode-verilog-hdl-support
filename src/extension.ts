@@ -19,11 +19,11 @@ import { openWaveform } from './waveform/OpenWaveform';
 import { InactivePreprocessorDecorationProvider } from './providers/InactivePreprocessorDecorationProvider';
 
 let ctagsManager: CtagsManager | undefined;
-const extensionID: string = 'mshr-h.veriloghdl';
 
 let lintManager: LintManager;
 
 export async function activate(context: vscode.ExtensionContext) {
+  const extensionID = context.extension.id;
   await bootstrapLogging();
 
   const logger = getExtensionLogger();

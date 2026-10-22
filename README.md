@@ -1,6 +1,6 @@
 # HDL support for VS Code <img src="images/icon.png" alt="HDL support for VS Code icon" width="56" style="vertical-align: middle;" />
 
-HDL support for VS Code with syntax highlighting, snippets, classic Ctags-backed editing features, linting, formatting, waveform viewing, inactive preprocessor highlighting, and optional external language servers.
+Verilog & SystemVerilog (Bundled Verible), published under the identity `robcholz.veriloghdl-bundled`, is a fork of [mshr-h/vscode-verilog-hdl-support](https://github.com/mshr-h/vscode-verilog-hdl-support). It provides syntax highlighting, snippets, classic Ctags-backed editing features, linting, formatting, waveform viewing, inactive preprocessor highlighting, and optional external language servers.
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10949/badge)](https://www.bestpractices.dev/projects/10949)
 [Ask DeepWiki](https://deepwiki.com/mshr-h/vscode-verilog-hdl-support)
@@ -163,11 +163,20 @@ Download links will appear under [GitHub Releases](https://github.com/robcholz/v
 
 ### VS Code Marketplace availability
 
-This fork is **not published to the Marketplace**. The manifest currently retains upstream's `mshr-h.veriloghdl` identity for compatibility; the existing Marketplace listing belongs to upstream and does not contain this fork's changes.
+This fork's publisher is `robcholz`, its extension name is `veriloghdl-bundled`, and its display name is **Verilog & SystemVerilog (Bundled Verible)**. It is **not published to the Marketplace yet**. The upstream listing does not contain this fork's changes.
 
-To distribute the fork through the Marketplace, create or use a publisher you control at [Manage Publishers & Extensions](https://marketplace.visualstudio.com/manage). Then prepare a distinct fork identity (publisher, extension name/display name, metadata, runtime extension-ID lookups, and tests) and publish all five platform packages under that identity and version. VS Code then selects the package matching the extension host automatically. Do not upload the current `mshr-h` packages under another publisher without updating their identity.
+To publish manually, sign in at [Manage Publishers & Extensions](https://marketplace.visualstudio.com/manage), select the `robcholz` publisher, and upload a CI-built VSIX as a new **Visual Studio Code** extension. Upload the remaining four platform packages under the same extension and version. Use packages built after the publisher-identity change; older packages still belong to upstream's identity. VS Code selects the package matching the extension host automatically.
 
-A maintainer can upload Marketplace-ready VSIXs through the publisher management portal, or configure authenticated CI publishing after publisher access is established. This GitHub release workflow deliberately does not perform Marketplace publication. See Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) for publisher registration, platform-specific packages, and current authentication options. Keep publishing credentials in CI secrets or an approved identity connection; do not paste them into this repository or chat.
+After publication, search Extensions for `@id:robcholz.veriloghdl-bundled`. If you have multiple HDL extensions installed, choose this fork as the formatter in your settings:
+
+```json
+{
+  "[verilog]": { "editor.defaultFormatter": "robcholz.veriloghdl-bundled" },
+  "[systemverilog]": { "editor.defaultFormatter": "robcholz.veriloghdl-bundled" }
+}
+```
+
+Marketplace publishing remains a separate, explicit step; the tag workflow publishes GitHub releases only. See Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) for platform-specific packages and current authentication options. Keep publishing credentials in CI secrets or an approved identity connection; do not paste them into this repository or chat.
 
 ## Waveform Viewing
 

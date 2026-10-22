@@ -40,7 +40,7 @@ suite('Doctor', () => {
   test('renderDoctorReport includes sections, statuses, and summary counts', () => {
     const report: DoctorReport = {
       generatedAt: '2026-05-19T00:00:00.000Z',
-      extensionId: 'mshr-h.veriloghdl',
+      extensionId: 'robcholz.veriloghdl-bundled',
       extensionVersion: '1.23.0',
       vscodeVersion: '1.100.0',
       platform: 'darwin',

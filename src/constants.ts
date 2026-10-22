@@ -4,6 +4,8 @@
  * Constants used throughout the extension.
  */
 
+export const EXTENSION_ID = 'robcholz.veriloghdl-bundled';
+
 /**
  * Represents the end of a line when creating a Range.
  * Using Number.MAX_VALUE causes VS Code to clamp to the actual line length.

@@ -4,10 +4,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { getRepositoryRoot } from './pathTestUtils';
-
-const EXTENSION_ID = 'mshr-h.veriloghdl';
+import { EXTENSION_ID } from '../constants';
 
 suite('Extension Test Suite', () => {
+  test('fork owns its Marketplace identity without upstream gallery metadata', () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(getRepositoryRoot(), 'package.json'), 'utf8')
+    );
+    assert.strictEqual(manifest.publisher, 'robcholz');
+    assert.strictEqual(manifest.name, 'veriloghdl-bundled');
+    assert.strictEqual(EXTENSION_ID, `${manifest.publisher}.${manifest.name}`);
+    assert.strictEqual(manifest.__metadata, undefined);
+    assert.strictEqual(manifest.repository.url, 'https://github.com/robcholz/vscode-verilog-hdl-support.git');
+    assert.strictEqual(vscode.extensions.getExtension(EXTENSION_ID)?.id, EXTENSION_ID);
+  });
+
   test('extension should be present', () => {
     const extension = vscode.extensions.getExtension(EXTENSION_ID);
     assert.ok(extension, `Extension ${EXTENSION_ID} should be installed`);

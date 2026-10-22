@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as process from 'process';
 import * as vscode from 'vscode';
+import { EXTENSION_ID } from '../constants';
 import which = require('which');
 import { getExtensionLogger } from '../logging';
 import { runTool, ToolRunError, type ToolRunOptions, type ToolRunResult } from '../tools/ToolRunner';
@@ -709,7 +710,7 @@ export async function buildFormatterChecks(
   if (formatter === 'verible-verilog-format') {
     try {
       formatterConfig.path = resolveVeribleExecutable(formatterConfig.path, {
-        extensionPath: vscode.extensions.getExtension('mshr-h.veriloghdl')?.extensionPath ?? '',
+        extensionPath: vscode.extensions.getExtension(EXTENSION_ID)?.extensionPath ?? '',
       });
     } catch (error) {
       checks.push({ status: 'error', message: String(error) });

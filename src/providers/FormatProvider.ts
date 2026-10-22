@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import * as vscode from 'vscode';
+import { EXTENSION_ID } from '../constants';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
@@ -201,7 +202,7 @@ class IStyleVerilogFormatterEditProvider extends FileBasedFormattingEditProvider
 class VeribleVerilogFormatEditProvider extends FileBasedFormattingEditProvider {
   protected resolveExecutable(): string {
     const extensionPath = this.dependencies.extensionPath
-      ?? vscode.extensions.getExtension('mshr-h.veriloghdl')?.extensionPath
+      ?? vscode.extensions.getExtension(EXTENSION_ID)?.extensionPath
       ?? '';
     return (this.dependencies.resolveVerible ?? resolveVeribleExecutable)(
       this.config.get('path', 'verible-verilog-format'), { extensionPath }

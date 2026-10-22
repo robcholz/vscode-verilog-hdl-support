@@ -1,16 +1,16 @@
 {
-  "name": "veriloghdl",
-  "displayName": "Verilog-HDL/SystemVerilog",
-  "description": "Verilog-HDL/SystemVerilog support for VS Code",
+  "name": "veriloghdl-bundled",
+  "displayName": "Verilog & SystemVerilog (Bundled Verible)",
+  "description": "Verilog and SystemVerilog support with a bundled native Verible formatter, based on mshr-h/vscode-verilog-hdl-support.",
   "version": "1.29.1",
-  "publisher": "mshr-h",
-  "homepage": "https://github.com/mshr-h/vscode-verilog-hdl-support",
+  "publisher": "robcholz",
+  "homepage": "https://github.com/robcholz/vscode-verilog-hdl-support",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mshr-h/vscode-verilog-hdl-support.git"
+    "url": "https://github.com/robcholz/vscode-verilog-hdl-support.git"
   },
   "bugs": {
-    "url": "https://github.com/mshr-h/vscode-verilog-hdl-support/issues"
+    "url": "https://github.com/robcholz/vscode-verilog-hdl-support/issues"
   },
   "engines": {
     "vscode": "^1.107.0"
@@ -827,10 +827,5 @@
     "npm-run-all2": "^8.0.4",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.56.0"
-  },
-  "__metadata": {
-    "id": "feb7e3b5-7d35-4f95-a3d2-61eeaa12efa5",
-    "publisherDisplayName": "mshr-h",
-    "publisherId": "fcf32c99-a624-437b-9f47-9333ea128623"
   }
 }

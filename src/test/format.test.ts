@@ -298,7 +298,7 @@ suite('Bundled formatter invocation', () => {
       } finally { token.dispose(); }
     });
 
-    test(`${language} actually formats with the source-built bundle`, async function () {
+    test(`${language} finds the installed fork and actually formats with its source-built bundle`, async function () {
       this.timeout(15000);
       const root = getRepositoryRoot();
       try { resolveVeribleExecutable('verible-verilog-format', { extensionPath: root }); }
@@ -307,8 +307,8 @@ suite('Bundled formatter invocation', () => {
         this.skip(); return;
       }
       const provider = language === 'verilog'
-        ? new VerilogFormatProvider({ extensionPath: root })
-        : new SystemVerilogFormatProvider({ extensionPath: root });
+        ? new VerilogFormatProvider()
+        : new SystemVerilogFormatProvider();
       const input = language === 'verilog' ? 'module   m;wire a;endmodule' : 'module   m;logic a;endmodule';
       const document = await vscode.workspace.openTextDocument({ language, content: input });
       const token = new vscode.CancellationTokenSource();

@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 - Default Verilog formatting to Verible while preserving existing formatter choices and arguments.
 - Publish the five tested platform VSIXs as a GitHub release when a matching version tag is pushed; Marketplace publishing remains disabled.
+- Prepare the fork's own Marketplace identity, `robcholz.veriloghdl-bundled`, and resolve activation, diagnostics, and formatting against that identity.
 
 ## [1.29.0] - 2026-07-12
 
