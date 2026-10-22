@@ -139,7 +139,7 @@ npm run verify:vsix -- veriloghdl-darwin-arm64.vsix darwin-arm64
 python scripts/smoke-vsix.py veriloghdl-darwin-arm64.vsix darwin-arm64
 ```
 
-`npm run build:verible` stages only the native target and verbatim upstream license/notice files from Verible and fetched Bazel dependencies. `npm run package` refuses a missing or mismatched bundle; it never initiates a native build. The VSIX verifier rejects submodule sources, missing legal files, extra platform bundles, and multiple formatter executables. CI runs formatter resolution/invocation tests and smoke-tests both `.v` and `.sv` with the binary extracted from the actual VSIX, using a directory with spaces and a restricted PATH.
+`npm run build:verible` stages only the native target and verbatim upstream license/notice files from Verible and fetched Bazel dependencies. `npm run package` refuses a missing or mismatched bundle; it never initiates a native build. The VSIX verifier rejects submodule sources, missing legal files, extra platform bundles, and multiple formatter executables. CI pins its VS Code test host to the declared minimum version, 1.107.0, and runs formatter resolution/invocation tests and smoke-tests both `.v` and `.sv` with the binary extracted from the actual VSIX, using a directory with spaces and a restricted PATH.
 
 ## Waveform Viewing
 

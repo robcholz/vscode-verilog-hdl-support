@@ -285,7 +285,7 @@ suite('Bundled formatter invocation', () => {
           assert.strictEqual(options.command, binary);
           assert.deepStrictEqual(options.args.slice(0, -1), ['--inplace', '--indentation_spaces=4']);
           assert.ok(options.cancellationToken);
-          fs.writeFileSync(options.args.at(-1)!, 'module m;\nendmodule\n');
+          fs.writeFileSync(options.args[options.args.length - 1], 'module m;\nendmodule\n');
           return { command: options.command, args: options.args, exitCode: 0, signal: null, stdout: '', stderr: '' };
         },
       };

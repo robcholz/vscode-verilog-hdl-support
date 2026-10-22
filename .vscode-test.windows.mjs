@@ -5,6 +5,7 @@ import * as path from 'node:path';
 const testTempRoot = path.join(os.tmpdir(), `veriloghdl-vscode-test-${process.pid}`);
 
 export default defineConfig({
+  version: '1.107.0',
 	files: [
 		'out/src/test/wslPathConverter.test.js',
 		'out/src/test/bundledVerible.test.js',

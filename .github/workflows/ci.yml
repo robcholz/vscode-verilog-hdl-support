@@ -124,7 +124,7 @@ jobs:
           sudo apt update
           sudo apt install -y iverilog verilator
           cargo install svls
-          cargo install --git https://github.com/vivekmalneedi/veridian.git
+          cargo install --locked --git https://github.com/vivekmalneedi/veridian.git
         if: runner.os == 'Linux'
       - run: xvfb-run -a npm test
         if: runner.os == 'Linux'
