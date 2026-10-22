@@ -1,5 +1,4 @@
-# Historical filename retained; this workflow publishes GitHub releases only.
-name: Release platform VSIX packages
+name: Release platform VSIX packages and publish Marketplace
 on:
   push:
     branches: [main, bundle-verible-from-submodule]
@@ -18,6 +17,16 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Test release validation
         run: python scripts/test-release.py
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+      - name: Install pinned Marketplace client without lifecycle scripts
+        run: npm install --global --no-audit --no-fund --omit=optional --ignore-scripts @vscode/vsce@3.6.0
+      - name: Test Marketplace publishing without uploads
+        env:
+          VERILOGHDL_REQUIRE_VSCE: '1'
+          VSCE_STORE: file
+        run: python scripts/test-marketplace.py
       - name: Verify tag matches package and changelog
         run: python scripts/prepare-release.py --ref "$GITHUB_REF" --allow-branch
 
@@ -45,6 +54,8 @@ jobs:
           path: release-assets
       - name: Verify every package identity, version, platform, source pin and notice inventory
         run: python scripts/prepare-release.py --ref "$GITHUB_REF" --allow-branch --artifacts release-assets --notes RELEASE_NOTES.md
+      - name: Dry run Marketplace publishing with the actual tested packages
+        run: python scripts/publish-marketplace.py --ref "$GITHUB_REF" --artifacts release-assets --dry-run
       - name: Publish GitHub release with tested VSIXs
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -55,3 +66,62 @@ jobs:
       - name: Report branch dry run
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: echo 'All five packages verified. Branch dry runs do not create releases.'
+
+  marketplace:
+    name: Publish all five tested platforms to VS Code Marketplace
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/') && github.repository == 'robcholz/vscode-verilog-hdl-support'
+    runs-on: ubuntu-22.04
+    environment: marketplace
+    concurrency:
+      group: marketplace-robcholz-veriloghdl-bundled
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      MARKETPLACE_AUTH: ${{ vars.MARKETPLACE_AUTH || 'oidc' }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_CORE_OUTPUT: none
+      VSCE_STORE: file
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: veriloghdl-*
+          merge-multiple: true
+          path: release-assets
+      - name: Verify artifacts and tag again before authentication
+        run: python scripts/prepare-release.py --ref "$GITHUB_REF" --artifacts release-assets
+      - name: Install pinned Marketplace client without lifecycle scripts
+        run: npm install --global --no-audit --no-fund --omit=optional --ignore-scripts @vscode/vsce@3.6.0
+      - name: Verify authentication configuration
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          case "$MARKETPLACE_AUTH" in
+            oidc) test -n "$AZURE_CLIENT_ID" && test -n "$AZURE_TENANT_ID" || { echo 'Set AZURE_CLIENT_ID and AZURE_TENANT_ID environment variables and configure OIDC; see README.'; exit 1; } ;;
+            pat) test -n "$VSCE_PAT" || { echo 'Set the VSCE_PAT environment secret; see README.'; exit 1; } ;;
+            *) echo 'MARKETPLACE_AUTH must be oidc or pat'; exit 1 ;;
+          esac
+      - name: Sign in with GitHub OIDC (no client secret)
+        if: env.MARKETPLACE_AUTH == 'oidc'
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Publish prebuilt packages with Entra ID
+        if: env.MARKETPLACE_AUTH == 'oidc'
+        run: python scripts/publish-marketplace.py --ref "$GITHUB_REF" --artifacts release-assets --auth oidc
+      - name: Publish prebuilt packages with PAT
+        if: env.MARKETPLACE_AUTH == 'pat'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: python scripts/publish-marketplace.py --ref "$GITHUB_REF" --artifacts release-assets --auth pat

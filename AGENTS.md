@@ -76,17 +76,20 @@ This repo uses tag-driven publishing.
 - Update `package.json` version and `CHANGELOG.md` (and any other release notes expected by contributors).
 - Do not push a version tag automatically. Ask the user before creating or
   pushing a tag such as `vX.Y.Z`.
-- `.github/workflows/publish-marketplace.yml` retains its historical filename
-  but publishes GitHub releases only. Matching `vX.Y.Z` tags run upstream checks
+- `.github/workflows/publish-marketplace.yml` publishes GitHub and Marketplace releases. Matching `vX.Y.Z` tags run upstream checks
   and native packaging, validate all five VSIXs, and upload them as release assets.
   Branch pushes and manual branch dispatches are dry runs and do not create
   releases.
-- Marketplace publication remains disabled until an owned publisher identity
-  and publishing authorization are configured.
+- Marketplace publication uses a separate tag-only job after every check and
+  package has passed. The `marketplace` environment supplies OIDC variables or
+  an explicitly selected `VSCE_PAT` secret; builds and branch runs never receive
+  publishing credentials. See README for setup. Do not create or push a tag
+  merely to test publishing.
 - `.github/workflows/ci.yml` runs upstream checks;
   `.github/workflows/bundled-vsix.yml` builds, tests, and uploads five native
   VSIXs and checks the complete release asset set.
-- Release gate tests live in `scripts/test-release.py`; run them only in CI
+- Release gate and publishing tests live in `scripts/test-release.py` and
+  `scripts/test-marketplace.py`; run them only in CI
   while the user's no-local-build/test instruction remains in effect.
 
 ## Testing Notes

@@ -1,6 +1,6 @@
 # HDL support for VS Code <img src="images/icon.png" alt="HDL support for VS Code icon" width="56" style="vertical-align: middle;" />
 
-Verilog & SystemVerilog (Bundled Verible), published under the identity `robcholz.veriloghdl-bundled`, is a fork of [mshr-h/vscode-verilog-hdl-support](https://github.com/mshr-h/vscode-verilog-hdl-support). It provides syntax highlighting, snippets, classic Ctags-backed editing features, linting, formatting, waveform viewing, inactive preprocessor highlighting, and optional external language servers.
+Verilog & SystemVerilog (Bundled Verible), with extension identity `robcholz.veriloghdl-bundled`, is a fork of [mshr-h/vscode-verilog-hdl-support](https://github.com/mshr-h/vscode-verilog-hdl-support). It provides syntax highlighting, snippets, classic Ctags-backed editing features, linting, formatting, waveform viewing, inactive preprocessor highlighting, and optional external language servers.
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10949/badge)](https://www.bestpractices.dev/projects/10949)
 [Ask DeepWiki](https://deepwiki.com/mshr-h/vscode-verilog-hdl-support)
@@ -118,7 +118,7 @@ On Windows, for example, use `"C:\\Custom Tools\\verible-verilog-format.exe"`. E
 
 Verible is pinned by the Git gitlink in `third_party/verible` to release **v0.0-4071-g8d9f2c97**, commit `8d9f2c973c386ea81834614767c1ffbebbf0ab1d`. Builds check the clean submodule against the gitlink and release tag. No formatter assets or checksum manifest are downloaded or consulted. Verible's own Bazel module dependency metadata is preserved unchanged.
 
-Push a branch named `bundle-verible-from-submodule` or `main` to run the release pipeline as a dry run, open a PR to `main`, or manually run **Bundled Verible VSIX** to build, test, and upload all five packages in CI. Pushing a matching version tag runs the same release pipeline and publishes its tested assets, as described below. Marketplace publishing is disabled. Artifact names are `veriloghdl-<target>`. The macOS Apple Silicon artifact is `veriloghdl-darwin-arm64`.
+Push a branch named `bundle-verible-from-submodule` or `main` to run the release pipeline as a dry run, open a PR to `main`, or manually run **Bundled Verible VSIX** to build, test, and upload all five packages in CI. Pushing a matching version tag runs the same release pipeline and publishes its tested assets, as described below. Tag runs also publish those same packages to the Marketplace after credentials are configured below. Artifact names are `veriloghdl-<target>`. The macOS Apple Silicon artifact is `veriloghdl-darwin-arm64`.
 
 For contributors who choose to build locally (these commands are documentation only; this implementation task runs builds exclusively in CI), install Node.js 24, the Bazel version in `third_party/verible/.bazelversion`, and a native C++ toolchain. Windows also needs LLVM/clang-cl and `winflexbison3`, as in `.github/actions/build-verible/action.yml`. Bazel uses Java during the build; users of the VSIX do not need it.
 
@@ -143,14 +143,15 @@ python scripts/smoke-vsix.py veriloghdl-darwin-arm64.vsix darwin-arm64
 
 ### Git tags and GitHub releases
 
-The **Release platform VSIX packages** workflow (`.github/workflows/publish-marketplace.yml`, retaining its historical filename) runs when a `v<major>.<minor>.<patch>` tag is pushed. It:
+The **Release platform VSIX packages and publish Marketplace** workflow (`.github/workflows/publish-marketplace.yml`) runs when a `v<major>.<minor>.<patch>` tag is pushed. It:
 
 1. Checks that the tag, `package.json`, both root versions in `package-lock.json`, and the versioned changelog entry agree.
 2. Runs the upstream checks and builds/tests all five native VSIXs in CI.
 3. Verifies every VSIX's extension identity, version, target, pinned Verible source commit, single native binary, and notice inventory.
 4. Creates a GitHub release from the changelog notes with the five tested VSIXs attached.
+5. Publishes those exact five packages as `robcholz.veriloghdl-bundled` using a separate, tag-only Marketplace job. It never rebuilds them during publication.
 
-No release is created if any required check or platform fails. The workflow uses the repository's GitHub token; no publishing PAT is needed for GitHub releases. Branch pushes and manual runs against a branch exercise the same gates and artifacts but do not create a release.
+No release is created if any required check or platform fails. The workflow uses the repository's GitHub token; no publishing PAT is needed for GitHub releases. Branch pushes and manual runs against a branch exercise the same gates and artifacts but do not create a release or authenticate to the Marketplace. They validate the publishing plan without credentials.
 
 For a new version, update `package.json`, the two root extension versions in `package-lock.json`, and `CHANGELOG.md`, then commit and push the source changes. After approving the release, the maintainer can push the matching tag; for the prepared version:
 
@@ -163,7 +164,7 @@ Download links will appear under [GitHub Releases](https://github.com/robcholz/v
 
 ### VS Code Marketplace availability
 
-This fork's publisher is `robcholz`, its extension name is `veriloghdl-bundled`, and its display name is **Verilog & SystemVerilog (Bundled Verible)**. It is **not published to the Marketplace yet**. The upstream listing does not contain this fork's changes.
+This fork's publisher is `robcholz`, its extension name is `veriloghdl-bundled`, and its display name is **Verilog & SystemVerilog (Bundled Verible)**. The first successful authenticated tag run will create the Marketplace listing. The upstream listing does not contain this fork's changes.
 
 To publish manually, sign in at [Manage Publishers & Extensions](https://marketplace.visualstudio.com/manage), select the `robcholz` publisher, and upload a CI-built VSIX as a new **Visual Studio Code** extension. Upload the remaining four platform packages under the same extension and version. Use packages built after the publisher-identity change; older packages still belong to upstream's identity. VS Code selects the package matching the extension host automatically.
 
@@ -176,7 +177,36 @@ After publication, search Extensions for `@id:robcholz.veriloghdl-bundled`. If y
 }
 ```
 
-Marketplace publishing remains a separate, explicit step; the tag workflow publishes GitHub releases only. See Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) for platform-specific packages and current authentication options. Keep publishing credentials in CI secrets or an approved identity connection; do not paste them into this repository or chat.
+### Automatic Marketplace publishing: one-time setup
+
+Create a GitHub Actions environment named **`marketplace`** in [repository settings](https://github.com/robcholz/vscode-verilog-hdl-support/settings/environments). Restrict its deployment rules to **tags** matching `v*`. Leave required reviewers unset for unattended tag publishing. Store the variables/secrets below in that environment. The workflow fails with setup instructions if authentication is missing; it does not silently skip a release.
+
+**Recommended: Microsoft Entra ID with GitHub OIDC.** No PAT or client secret is stored.
+
+1. Create an Entra application/service principal (or user-assigned managed identity) and note its client ID and tenant ID.
+2. Add a federated credential trusting this GitHub environment:
+
+   ```text
+   Issuer:   https://token.actions.githubusercontent.com
+   Subject:  repo:robcholz/vscode-verilog-hdl-support:environment:marketplace
+   Audience: api://AzureADTokenExchange
+   ```
+
+3. Grant that identity **Contributor** access to the `robcholz` Marketplace publisher. Follow Microsoft's [identity authorization instructions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#secure-automated-publishing-to-visual-studio-marketplace); the Marketplace member identifier is the identity's Azure DevOps profile ID, not its client ID. Obtain that ID while authenticated as the publishing identity using `az rest --url https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource 499b84ac-1321-427f-aa17-267ca6975798 --query id --output tsv`.
+4. Set these GitHub **environment variables**:
+
+   | Variable | Value |
+   | --- | --- |
+   | `MARKETPLACE_AUTH` | `oidc` (also the default) |
+   | `AZURE_CLIENT_ID` | Publishing identity's client ID |
+   | `AZURE_TENANT_ID` | Identity's Entra tenant ID |
+
+The job uses [Azure Login's OIDC support](https://github.com/Azure/login#login-with-openid-connect-oidc-recommended) and `vsce --azure-credential`. Its login allows no Azure subscription; the workflow needs no subscription ID or Azure resource deployment permissions. The identity still needs access to the Marketplace publisher.
+
+**PAT alternative:** Set environment variable `MARKETPLACE_AUTH=pat` and environment **secret** `VSCE_PAT` to an Azure DevOps PAT owned by an account with publishing access to `robcholz`. Create the PAT with **All accessible organizations** and the custom **Marketplace → Manage** scope, following Microsoft's [PAT instructions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#get-a-personal-access-token). This is not a GitHub token. Choose a short expiration and rotate it in GitHub before expiry. Microsoft states that global Azure DevOps PATs retire on **December 1, 2026**; use OIDC for a lasting setup. Do not paste credentials into this repository or chat.
+
+Push a matching version tag only after this setup. A failed Marketplace job leaves the tested GitHub release available. Fix authentication and **re-run failed jobs** on that same run: VSCE skips platform/version combinations already uploaded, allowing a partially completed five-platform upload to resume. Uploads are sequential, so a failure can leave some platforms published. Branch dry runs and publishing tests never upload or require real credentials.
+
 
 ## Waveform Viewing
 

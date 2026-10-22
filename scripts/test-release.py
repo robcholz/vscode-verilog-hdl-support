@@ -32,7 +32,7 @@ class ReleaseTests(unittest.TestCase):
         package = {**self.manifest, 'version': version}
         identity_target = declared_target or target
         xml = ('<PackageManifest xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">'
-               f'<Metadata><Identity Id="veriloghdl" Publisher="example-publisher" Version="{version}" TargetPlatform="{identity_target}"/>'
+               f'<Metadata><Identity Id="{self.manifest["name"]}" Publisher="{self.manifest["publisher"]}" Version="{version}" TargetPlatform="{identity_target}"/>'
                '</Metadata></PackageManifest>')
         info = {'target': target, 'commit': commit or self.commit, 'notices': ['verible/LICENSE']}
         entries = {
